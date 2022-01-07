@@ -1,12 +1,12 @@
-import React from 'react';
-import {DragDropContext, Draggable, Droppable, DropResult} from "react-beautiful-dnd"
+import {DragDropContext, DropResult} from "react-beautiful-dnd"
 import { useRecoilState } from 'recoil';
 import styled from 'styled-components';
 import { toDoState } from './atom';
+import Board from './Components/Board';
 
 const Wrapper = styled.div`
   display: flex;
-  max-width: 480px;
+  max-width: 680px;
   width: 100%;
   margin: 0 auto;
   justify-content: center;
@@ -16,68 +16,58 @@ const Wrapper = styled.div`
 const Boards = styled.div`
   display: grid;
   width: 100%;
-  grid-template-columns: repeat(1, 1fr);
+  gap: 10px;
+  grid-template-columns: repeat(3, 1fr);
 `
-
-const Board = styled.div`
-  padding-top: 30px;
-  padding: 20px 30px;
-  background-color: ${props=>props.theme.boardColor};
-  border-radius: 5px;
-  min-height: 200px;
-`
-const Card = styled.div`
-  border-radius: 5px;
-  background-color: ${props => props.theme.cardColor};
-  padding: 10px;
-  border-radius: 5px;
-  margin-bottom: 5px;
-`
-
 
 function App() {
   const [toDos, setToDos]  = useRecoilState(toDoState)
-  const onDragEnd = ({ draggableId ,destination, source}:DropResult) => {
+  const onDragEnd = (info:DropResult) => {
+    console.log(info);
+    const {destination, source, draggableId} = info
     if(!destination) return;
-    setToDos(oldToDos => {
-      const toDosCopy = [...oldToDos]
-      // 1) Delete item on source.index
-      console.log("delete item on ", source.index)
-      console.log(toDosCopy)
-      toDosCopy.splice(source.index, 1);
-      console.log("delete item")
-      console.log(toDosCopy)
+    if(source.droppableId === destination?.droppableId) {
+      // same board
+      setToDos((allBoard) => {
+        const boardCopy = [...allBoard[source.droppableId]]
+        // const y = { x: ["a","b","c","d"]}  ===>>  y["x"]  ====> ['a', 'b', 'c', 'd']
+        // toDosobject에서 droppableId의 value값을 가져온다
+        boardCopy.splice(source.index, 1)
+        boardCopy.splice(destination.index, 0, draggableId)
+        //자르고 붙인다
+        return {
+          ...allBoard,
+          [source.droppableId]:boardCopy
+          // console.log([source.droppableId]) 잘 이해가 되지 않았다 array인데 키값으로 string을 받는다는게..
+        }
+      })
+    }
+    if(destination.droppableId !== source.droppableId) {
+      //cross board
+      setToDos((allBoard) => {
+        const sourceBoard = [...allBoard[source.droppableId]]
+        const destinationBoard = [...allBoard[destination.droppableId]]
 
-      // 2) 새로운 위치에 다시 넣어준다
-      console.log("put back", draggableId, " on ", destination.index)
-      toDosCopy.splice(destination?.index, 0, draggableId)
-      console.log(toDosCopy)
-      return toDosCopy
-    })
+        sourceBoard.splice(source.index, 1)
+        destinationBoard.splice(destination.index, 0, draggableId)
+
+        return {
+          ...allBoard,
+          [source.droppableId]:sourceBoard,
+          [destination.droppableId]:destinationBoard
+          //js가 To_Do 등 key값으로 바꿔줌
+        }
+      })
+    }
   };
 
   return (
     <DragDropContext onDragEnd={onDragEnd}>
       <Wrapper>
         <Boards>
-          <Droppable droppableId='one'>
-            {(provided) => 
-              <Board ref={provided.innerRef} {...provided.droppableProps}>
-                {toDos.map((todo, index) => (
-                <Draggable key={todo} draggableId={todo} index={index}>
-                  {(provided) => (
-                  <Card 
-                    ref={provided.innerRef} 
-                    {...provided.draggableProps} 
-                    {...provided.dragHandleProps}>
-                      {todo}
-                  </Card>
-                  )}
-                </Draggable>
-                ))}
-                {provided.placeholder}
-              </Board>}
-          </Droppable>
+          {Object.keys(toDos).map((boardId, index) => 
+            <Board key={boardId} boardId={boardId} toDos={toDos[boardId]}/>
+          )}
         </Boards>
       </Wrapper>
     </DragDropContext>
