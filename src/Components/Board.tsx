@@ -1,4 +1,4 @@
-import React from 'react'
+import React, {useRef} from 'react'
 import {Droppable} from "react-beautiful-dnd"
 import DragabbleCard from './DragabbleCard'
 import styled from 'styled-components'
@@ -14,9 +14,17 @@ interface IAreaProps {
 }
 
 function Board({toDos, boardId}:IBoardProps) {
+    const inputRef = useRef<HTMLInputElement>(null)
+    const onClick = () => {
+        inputRef.current?.focus();
+        setTimeout(() => {inputRef.current?.blur()}, 5000)
+    }
+
     return (
         <Wrapper>
             <Title>{boardId}</Title>
+            <input ref={inputRef} placeholder='grab me'/>
+            <button onClick={onClick}>Click me</button>
             <Droppable droppableId={boardId}>
                 {(provided, snapshot) => (
                 <Area 
