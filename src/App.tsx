@@ -23,17 +23,17 @@ const Boards = styled.div`
 function App() {
   const [toDos, setToDos]  = useRecoilState(toDoState)
   const onDragEnd = (info:DropResult) => {
-    console.log(info);
     const {destination, source, draggableId} = info
     if(!destination) return;
     if(source.droppableId === destination?.droppableId) {
       // same board
       setToDos((allBoard) => {
         const boardCopy = [...allBoard[source.droppableId]]
+        const taskObj = boardCopy[source.index]
         // const y = { x: ["a","b","c","d"]}  ===>>  y["x"]  ====> ['a', 'b', 'c', 'd']
         // toDosobject에서 droppableId의 value값을 가져온다
         boardCopy.splice(source.index, 1)
-        boardCopy.splice(destination.index, 0, draggableId)
+        boardCopy.splice(destination.index, 0, taskObj)
         //자르고 붙인다
         return {
           ...allBoard,
@@ -47,9 +47,10 @@ function App() {
       setToDos((allBoard) => {
         const sourceBoard = [...allBoard[source.droppableId]]
         const destinationBoard = [...allBoard[destination.droppableId]]
+        const taskObj = sourceBoard[source.index]
 
         sourceBoard.splice(source.index, 1)
-        destinationBoard.splice(destination.index, 0, draggableId)
+        destinationBoard.splice(destination.index, 0, taskObj)
 
         return {
           ...allBoard,
