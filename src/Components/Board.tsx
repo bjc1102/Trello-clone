@@ -17,16 +17,18 @@ interface IAreaProps {
 }
 
 interface IForm {
-    toDo:string
+    toDo:string,
 }
 
 function Board({toDos, boardId}:IBoardProps) {
     const {
         register,
         setValue,
-        handleSubmit
+        handleSubmit,
+        formState:{errors}
     } = useForm<IForm>();
     const setToDos = useSetRecoilState(toDoState)
+
     const onValid = ({toDo}:IForm) => {
         const newToDo = {
             id:Date.now(),
@@ -45,7 +47,11 @@ function Board({toDos, boardId}:IBoardProps) {
         <Wrapper>
             <Title>{boardId}</Title>
             <Form onSubmit={handleSubmit(onValid)}>
-                <input {...register("toDo", {required:true})}type={"text"} placeholder={`Add task on ${boardId}`}></input>
+                <input {...register("toDo", {required:true, maxLength: {
+                    value:10,
+                    message:"Text is too long"
+                }})} type={"text"} placeholder={`Add task on ${boardId}`}></input>
+                <ErrorMessage>{errors.toDo?.message}</ErrorMessage>
             </Form>
             <Droppable droppableId={boardId}>
                 {(provided, snapshot) => (
@@ -55,7 +61,7 @@ function Board({toDos, boardId}:IBoardProps) {
                     ref={provided.innerRef} 
                     {...provided.droppableProps}>
                     {toDos.map((todo, index) => (
-                    <DragabbleCard key={todo.id} index={index} toDoId={todo.id} toDoText={todo.text}/>
+                    <DragabbleCard key={todo.id} boardId={boardId} index={index} toDoId={todo.id} toDoText={todo.text}/>
                     ))} {provided.placeholder}
                 </Area>
                 )}
@@ -94,4 +100,13 @@ const Form = styled.form`
     input {
         width: 100%;
     }
+`
+
+const ErrorMessage = styled.span`
+    display: block;
+    font-size: 18px;
+    font-weight: 700;
+    padding: 10px;
+    text-align: center;
+    color: ${({theme}) => theme.cardColor}
 `
